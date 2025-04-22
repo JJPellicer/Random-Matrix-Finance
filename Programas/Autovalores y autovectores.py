@@ -6,14 +6,16 @@ import os
 
 # Lista de activos (nombre de archivos sin .csv)
 assets = [
-    'aex', 'bovespa', 'cac40', 'chinaa50', 'dax', 'dowjones', 'ftse100',
-    'hangseng', 'ibex35', 'kospi', 'nasdaq', 'nifty50',
-    'nikkei225', 'omxs30', 'shanghai', 'smi', 'sp500', 'spasx200',
-    'spbmvipc', 'spmerval', 'sptsx', 'szse', 'oil', 'gas', 'gold', 'silver', 'copper', 'us10y'
+    'aex', 'cac40', 'dax', 'ftse100', 'ibex35', 'omxs30', 'smi',
+    'bovespa', 'spmerval',
+    'chinaa50', 'shanghai', 'szse',
+    'hangseng', 'kospi','nikkei225', 'nifty50','spasx200',
+    'dowjones','nasdaq', 'sp500','spbmvipc', 'sptsx',
+    'oil', 'gas', 'gold', 'silver', 'copper', 'us10y'
 ]
 
 # Ruta donde están tus archivos CSV
-data_path = 'D:/Usuario/3/TFG/Datos'
+data_path = 'C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos'
 
 # Diccionario para guardar las series de precios
 prices = {}
@@ -51,12 +53,12 @@ df_returns = np.log(df_prices / df_prices.shift(1)).dropna()
 correlation_matrix = df_returns.corr()
 
 # Visualización del heatmap
-plt.figure(figsize=(16, 12))
+plt.figure(figsize=(16, 14))
 sns.heatmap(correlation_matrix, annot=False, cmap="coolwarm", center=0,
             xticklabels=correlation_matrix.columns,
             yticklabels=correlation_matrix.columns)
-plt.title("Matriz de correlación de rendimientos logarítmicos")
-plt.tight_layout()
+plt.title("Correlation matrix of logarithmic returns")
+plt.tight_layout(rect=[0, 0.055, 1, 0.995])
 plt.show()
 
 # ---------------------------------------------
@@ -76,6 +78,37 @@ for i in range(5):
     print("Activos que más contribuyen:")
     print(components_sorted.head(5))
 
+
+# Crear histograma de los autovalores
+plt.figure(figsize=(10, 6))
+plt.hist(eigenvals, bins=100, density=True, color='skyblue', alpha=0.5, label="Eigenvalues", edgecolor='black')
+plt.title("Eigenvalues distribution")
+plt.xlabel("$\\lambda$")
+plt.ylabel("$\\rho(\\lambda)$")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+#Prueba
+# from scipy.stats import gaussian_kde
+
+# density = gaussian_kde(eigenvals, bw_method='scott')  # puedes probar también 'silverman' o manual
+# density.set_bandwidth(bw_method=density.factor * 0.1)  # más agudo
+
+# x_vals = np.linspace(min(eigenvals), max(eigenvals), 1000)
+# y_vals = density(x_vals)
+
+# plt.figure(figsize=(10, 6))
+# plt.plot(x_vals, y_vals, label='KDE ajustado', color='navy', linewidth=2)
+# plt.title("Espectro empírico ajustado")
+# plt.xlabel("Autovalor")
+# plt.ylabel("Densidad")
+# plt.grid(True)
+# plt.legend()
+# plt.tight_layout()
+# plt.show()
+
 # ---------------------------------------------
 # CONSTRUCCIÓN DE CARTERAS CON LOS 5 PRINCIPALES AUTOVECTORES
 # ---------------------------------------------
@@ -85,7 +118,7 @@ for i in range(5):
     weights = eigenvecs[:, i]
     weights /= np.sum(np.abs(weights))
     returns = df_returns @ weights
-    portfolio_cum_all[f"Autovalor {i+1}"] = (1 + returns).cumprod()
+    portfolio_cum_all[f"Eigenvalue {i+1}"] = (1 + returns).cumprod()
 
 # Comparación con SP500 (si existe en los datos)
 if 'sp500' in df_returns.columns:
@@ -97,9 +130,9 @@ plt.figure(figsize=(12, 6))
 for label, series in portfolio_cum_all.items():
     plt.plot(series, label=label)
 
-plt.title("Evolución acumulada de carteras basadas en los principales autovectores")
-plt.xlabel("Fecha")
-plt.ylabel("Multiplicador del capital")
+plt.title("Cumulative Performance of Portfolios Based on Leading Eigenvectors")
+plt.xlabel("Date")
+plt.ylabel("Portfolios Multiplier")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
@@ -109,29 +142,29 @@ plt.show()
 # MARCENKO-PASTUR TEÓRICA - FIGURA AJUSTADA
 # ---------------------------------------------
 
-q1 = 3.45
-q2 = 2.0
+# q1 = 3.45
+# q2 = 2.0
 
-def rho_empirical(lambda_vals, q):
-    lambda_plus = (np.sqrt(q) + 1)**2
-    lambda_minus = (np.sqrt(q) - 1)**2
-    rho = np.zeros_like(lambda_vals)
-    mask = (lambda_vals >= lambda_minus) & (lambda_vals <= lambda_plus)
-    rho[mask] = np.sqrt(4 * lambda_vals[mask] * q - (lambda_vals[mask] + q - 1)**2) / (2 * np.pi * lambda_vals[mask] * q)
-    rho[~np.isfinite(rho)] = 0
-    return rho
+# def rho_empirical(lambda_vals, q):
+#     lambda_plus = (np.sqrt(q) + 1)**2
+#     lambda_minus = (np.sqrt(q) - 1)**2
+#     rho = np.zeros_like(lambda_vals)
+#     mask = (lambda_vals >= lambda_minus) & (lambda_vals <= lambda_plus)
+#     rho[mask] = np.sqrt(4 * lambda_vals[mask] * q - (lambda_vals[mask] + q - 1)**2) / (2 * np.pi * lambda_vals[mask] * q)
+#     rho[~np.isfinite(rho)] = 0
+#     return rho
 
-lambda_vals = np.linspace(0.01, 3, 1000)
-rho_q1 = rho_empirical(lambda_vals, q1)
-rho_q2 = rho_empirical(lambda_vals, q2)
+# lambda_vals = np.linspace(0.01, 3, 1000)
+# rho_q1 = rho_empirical(lambda_vals, q1)
+# rho_q2 = rho_empirical(lambda_vals, q2)
 
-plt.figure(figsize=(8, 5))
-plt.plot(lambda_vals, rho_q2, label='exp Q=2', color='black')
-plt.plot(lambda_vals, rho_q1, '--', label='std Q=3.45', color='gray')
-plt.title('Marčenko–Pastur: densidad teórica (forma del paper)')
-plt.xlabel(r'$\lambda$')
-plt.ylabel(r'$\rho(\lambda)$')
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+# plt.figure(figsize=(8, 5))
+# plt.plot(lambda_vals, rho_q2, label='exp Q=2', color='black')
+# plt.plot(lambda_vals, rho_q1, '--', label='std Q=3.45', color='gray')
+# plt.title('Marčenko–Pastur: densidad teórica (forma del paper)')
+# plt.xlabel(r'$\lambda$')
+# plt.ylabel(r'$\rho(\lambda)$')
+# plt.legend()
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()

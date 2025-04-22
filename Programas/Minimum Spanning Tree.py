@@ -32,7 +32,7 @@ for asset in assets:
             color_nodos.append(colores[tipo])
 
 # Ruta a los datos
-data_path = 'D:/Usuario/3/TFG/Datos'
+data_path = 'C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos'
 
 # Diccionario de precios
 prices = {}
@@ -75,20 +75,28 @@ centralidad = nx.degree_centrality(G)
 tamanos_nodos = [300 + 1500 * centralidad[n] for n in G.nodes()]
 
 # Dibujar grafo con layout mejorado
-plt.figure(figsize=(14, 10))
+fig, ax = plt.subplots(figsize=(16, 12))
 pos = nx.kamada_kawai_layout(G)
+
+# Dibujar nodos y aristas
 nx.draw(G, pos,
         with_labels=True,
         node_color=color_nodos,
         edge_color='gray',
         node_size=tamanos_nodos,
         font_size=9,
-        width=1.5)
+        width=1.5,
+        ax=ax)
 
-# Etiquetas con pesos
+# Etiquetas de aristas
 labels = nx.get_edge_attributes(G, 'weight')
-nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f"{v:.2f}" for k, v in labels.items()}, font_size=7)
+nx.draw_networkx_edge_labels(G, pos,
+    edge_labels={k: f"{v:.2f}" for k, v in labels.items()},
+    font_size=7,
+    ax=ax)
 
-plt.title("Minimum Spanning Tree con tipos de activos y centralidad")
-plt.tight_layout()
+# Título y ajustes
+plt.title("Minimum Spanning Tree of assets", fontsize=14)
+plt.subplots_adjust(left=0.05, right=0.95, top=0.92, bottom=0.05)
 plt.show()
+

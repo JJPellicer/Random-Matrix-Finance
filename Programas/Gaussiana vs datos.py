@@ -16,7 +16,7 @@ assets = [
 ]
 
 # Ruta a los datos
-data_path = 'D:/Usuario/3/TFG/Datos'
+data_path = 'C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos'
 
 # Diccionario de precios
 prices = {}
@@ -45,11 +45,11 @@ y_gauss = norm.pdf(x, 0, 1)
 plt.plot(x, y_gauss, 'k--', label='Normal(0,1)', linewidth=2)
 
 for asset in assets:
-    sns.kdeplot(std_returns[asset], label=asset, linewidth=2)
+    sns.kdeplot(std_returns[asset], linewidth=2)
 
-plt.title("Distribuciones estandarizadas vs. gaussiana")
-plt.xlabel("x")
-plt.ylabel("Densidad")
+plt.title("Emphirical distributions vs gaussian")
+plt.xlabel("Standard Returns")
+plt.ylabel("PDF")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
