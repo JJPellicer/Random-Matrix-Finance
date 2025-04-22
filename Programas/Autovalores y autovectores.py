@@ -15,7 +15,7 @@ assets = [
 ]
 
 # Ruta donde están tus archivos CSV
-data_path = 'C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos'
+data_path = 'C:/Users/Propietario/Documents/GitHub/Random-Matrix-Finance/Datos'
 
 # Diccionario para guardar las series de precios
 prices = {}

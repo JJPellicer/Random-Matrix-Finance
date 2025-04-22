@@ -5,7 +5,7 @@ import matplotlib.dates as mdates
 import scipy.stats as stats
 
 # Cargar datos
-archivo = "C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos/sp500.csv"
+archivo = "C:/Users/Propietario/Documents/GitHub/Random-Matrix-Finance/Datos/sp500.csv"
 df = pd.read_csv(archivo, delimiter=',')
 
 # Convertir la columna de fecha al formato adecuado
