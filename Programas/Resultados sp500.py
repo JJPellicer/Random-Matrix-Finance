@@ -1,85 +1,100 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import matplotlib.dates as mdates
 import scipy.stats as stats
 
-# --------- Cargar y preparar datos (igual que en tu canvas) ---------
-archivo = "C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos/sp500.csv"
+# Cargar datos
+archivo = "C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Datos/sp500.csv"
 df = pd.read_csv(archivo, delimiter=',')
 
-# Adaptación de formato
+# Convertir la columna de fecha al formato adecuado
 df["Fecha"] = pd.to_datetime(df["Fecha"], format="%d.%m.%Y")
-df["Último"] = df["Último"].str.replace(".", "", regex=False)
-df["Último"] = df["Último"].str.replace(",", ".", regex=False).astype(float)
+
+# Convertir la columna "Último" a float (corrigiendo formato)
+df["Último"] = df["Último"].str.replace(".", "", regex=False)  # Eliminar separadores de miles
+df["Último"] = df["Último"].str.replace(",", ".", regex=False).astype(float)  # Reemplazar coma decimal y convertir a float
 
 # Ordenar por fecha
 df = df.sort_values(by="Fecha").reset_index(drop=True)
 
-# Cálculo de rendimientos logarítmicos
+# Calcular rendimientos logarítmicos
 df["Rendimiento"] = np.log(df["Último"] / df["Último"].shift(1))
 
-# Fechas, precios y rendimientos
-fechas = df["Fecha"].values
-precios = df["Último"].values
-rendimientos = df["Rendimiento"].values
+# Calcular diferencia de rendimientos Delta R para un intervalo Δt
+df["Delta_R"] = df["Rendimiento"].diff()
 
-# --------- Parámetros de animación ---------
-paso = 5               # actualizar cada 5 días
-ventana = 50           # usar solo los últimos 50 rendimientos para el histograma
+# Calcular promedios
+promedio_rendimiento = df["Rendimiento"].mean()
+promedio_delta_r = df["Delta_R"].mean()
+print(f"Promedio del rendimiento logarítmico: {promedio_rendimiento:.6f}")
+print(f"Promedio de Delta R: {promedio_delta_r:.6f}")
 
-# --------- Animación ---------
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+# Calcular la función de distribución del precio estimado
+df["R_acumulado"] = df["Rendimiento"].cumsum()
+df["Precio_Estimado"] = df["Último"].iloc[0] * np.exp(df["R_acumulado"])
 
-# Evolución de precios
-linea_precios, = ax1.plot([], [], lw=2)
-ax1.set_xlim(fechas[0], fechas[-1])
-ax1.set_ylim(np.min(precios)*0.95, np.max(precios)*1.05)
-ax1.set_title('Evolución del S&P 500')
-ax1.set_ylabel('Precio')
-ax1.grid(True)
-ax1.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
-ax1.xaxis.set_major_locator(mdates.MonthLocator(interval=2))
+# Graficar los rendimientos logarítmicos
+plt.figure(figsize=(12, 6))
+plt.plot(df["Fecha"], df["Rendimiento"], label="Rendimiento Logarítmico", marker='o', linestyle='-')
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+plt.xticks(rotation=45)
+plt.xlabel("Fecha")
+plt.ylabel("Rendimiento Logarítmico")
+plt.title("Evolución del Rendimiento Logarítmico del S&P 500")
+plt.legend()
+plt.grid()
+plt.show()
 
-# Histograma de rendimientos
-bins = np.linspace(np.nanmin(rendimientos), np.nanmax(rendimientos), 30)
-bar_container = ax2.hist([], bins=bins, color='skyblue', edgecolor='black')[2]
-ax2.set_xlim(np.nanmin(rendimientos), np.nanmax(rendimientos))
-ax2.set_ylim(0, 10)  # Ajustar mejor el eje Y
-ax2.set_title(f'Histograma de Rendimientos (últimos {ventana} días)')
-ax2.set_xlabel('Rendimiento Logarítmico')
-ax2.grid(True)
+# Graficar la variación de rendimientos (Delta R)
+plt.figure(figsize=(12, 6))
+plt.plot(df["Fecha"], df["Delta_R"], label="Delta R", marker='o', linestyle='-', color='r')
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+plt.xticks(rotation=45)
+plt.xlabel("Fecha")
+plt.ylabel("Delta R")
+plt.title("Variación del Rendimiento Logarítmico del S&P 500")
+plt.legend()
+plt.grid()
+plt.show()
 
-# Función de inicialización
-def init():
-    linea_precios.set_data([], [])
-    for rect in bar_container:
-        rect.set_height(0)
-    return linea_precios, *bar_container
+# Graficar la función de distribución del precio estimado
+plt.figure(figsize=(12, 6))
+plt.plot(df["Fecha"], df["Precio_Estimado"], label="Precio Estimado", marker='o', linestyle='-', color='g')
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+plt.xticks(rotation=45)
+plt.xlabel("Fecha")
+plt.ylabel("Precio Estimado")
+plt.title("Función de Distribución del Precio del S&P 500")
+plt.legend()
+plt.grid()
+plt.show()
 
-# Función de animación
-def animate(i):
-    idx = i * paso
-    if idx == 0 or idx >= len(fechas):
-        return init()
+# ---- Análisis de la Distribución de los Rendimientos ----
 
-    # Actualizar evolución del precio
-    linea_precios.set_data(fechas[:idx], precios[:idx])
+# Histograma de los rendimientos
+plt.figure(figsize=(12, 6))
+plt.hist(df["Rendimiento"].dropna(), bins=50, density=True, alpha=0.6, color='b', label="Histograma")
 
-    # Actualizar histograma de rendimientos en ventana móvil
-    inicio = max(1, idx - ventana)
-    datos_hist = rendimientos[inicio:idx]
+# Ajuste a una distribución normal
+mu, sigma = stats.norm.fit(df["Rendimiento"].dropna())
+x = np.linspace(df["Rendimiento"].min(), df["Rendimiento"].max(), 100)
+pdf = stats.norm.pdf(x, mu, sigma)
+plt.plot(x, pdf, 'r', label=f"Normal(μ={mu:.6f}, σ={sigma:.6f})")
 
-    n, _ = np.histogram(datos_hist, bins=bins)
-    for count, rect in zip(n, bar_container):
-        rect.set_height(count)
+plt.xlabel("Rendimiento Logarítmico")
+plt.ylabel("Densidad de Probabilidad")
+plt.title("Distribución de los Rendimientos del S&P 500")
+plt.legend()
+plt.grid()
+plt.show()
 
-    return linea_precios, *bar_container
-
-# Crear animación
-frames_total = len(fechas) // paso
-ani = FuncAnimation(fig, animate, frames=frames_total, init_func=init, blit=True, interval=100)
-
-plt.tight_layout()
+# Q-Q Plot para comparar con la distribución normal
+plt.figure(figsize=(12, 6))
+stats.probplot(df["Rendimiento"].dropna(), dist="norm", plot=plt)
+plt.title("Q-Q Plot de los Rendimientos del S&P 500")
+plt.grid()
 plt.show()

@@ -13,8 +13,8 @@ assets = [
     'nikkei225', 'oil', 'omxs30', 'shanghai', 'silver', 'smi', 'sp500', 'spasx200',
     'spbmvipc', 'spmerval', 'sptsx', 'szse', 'us10y'
 ]
-data_path  = r"C:\Users\Propietario\Desktop\TFG Juan\Random-Matrix-Finance-main\Datos"
-output_dir = r"C:\Users\Propietario\Desktop\TFG Juan\Random-Matrix-Finance-main\Resultados"
+data_path  = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Datos"
+output_dir = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Resultados"
 output_gif = os.path.join(output_dir, "assets_animation_annual.gif")
 
 # ——————————————————

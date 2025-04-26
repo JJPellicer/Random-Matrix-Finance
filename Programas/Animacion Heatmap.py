@@ -15,8 +15,8 @@ assets = [
     'dowjones','nasdaq', 'sp500', 'spbmvipc', 'sptsx',
     'oil', 'gas', 'gold', 'silver', 'copper', 'us10y'
 ]
-data_path  = r"C:\Users\Propietario\Desktop\TFG Juan\Random-Matrix-Finance-main\Datos"
-output_dir = r"C:\Users\Propietario\Desktop\TFG Juan\Random-Matrix-Finance-main\Resultados"
+data_path  = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Datos"
+output_dir = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Resultados"
 output_gif = os.path.join(output_dir, "corr_heatmap_yearly.gif")
 
 # ——————————————————
