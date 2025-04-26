@@ -1,10 +1,12 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import os
+from matplotlib.animation import FuncAnimation, PillowWriter
 
-# Lista de activos (nombre de archivos sin .csv)
+# ——————————————————
+# 1) Configuración de rutas y lista de activos
+# ——————————————————
 assets = [
     'aex', 'cac40', 'dax', 'ftse100', 'ibex35', 'omxs30', 'smi',
     'bovespa', 'spmerval',
@@ -13,158 +15,106 @@ assets = [
     'dowjones','nasdaq', 'sp500','spbmvipc', 'sptsx',
     'oil', 'gas', 'gold', 'silver', 'copper', 'us10y'
 ]
+data_path  = r"C:\Users\Propietario\Desktop\TFG Juan\Random-Matrix-Finance-main\Datos"
+output_dir = r"C:\Users\Propietario\Desktop\TFG Juan\Random-Matrix-Finance-main\Resultados"
+output_gif = os.path.join(output_dir, "eigen_portfolios_animation.gif")
 
-# Ruta donde están tus archivos CSV
-data_path = 'C:/Users/Propietario/Documents/GitHub/Random-Matrix-Finance/Datos'
-
-# Diccionario para guardar las series de precios
+# ——————————————————
+# 2) Leer datos y calcular rendimientos
+# ——————————————————
 prices = {}
-
 for asset in assets:
-    filepath = os.path.join(data_path, f"{asset}.csv")
-
-    # Leer el archivo con codificación española
-    df = pd.read_csv(filepath, encoding='ISO-8859-1')
-    df.columns = [col.lower().strip() for col in df.columns]  # normaliza cabeceras
-
-    # Detectar la columna de fecha automáticamente
-    date_col = next((col for col in df.columns if 'fecha' in col), None)
-    if date_col is None:
-        raise ValueError(f"No se encontró columna de fecha en {asset}.csv")
-
+    fp = os.path.join(data_path, f"{asset}.csv")
+    df = pd.read_csv(fp, encoding='ISO-8859-1')
+    df.columns = [c.lower().strip() for c in df.columns]
+    date_col = next(c for c in df.columns if 'fecha' in c)
     df[date_col] = pd.to_datetime(df[date_col], dayfirst=True)
-    df = df.sort_values(date_col)
-    df = df.set_index(date_col)
+    df = df.sort_values(date_col).set_index(date_col)
+    s = df.iloc[:, 0].astype(str)\
+          .str.replace('.', '', regex=False)\
+          .str.replace(',', '.', regex=False)
+    prices[asset] = s.astype(float)
 
-    # Usar la primera columna de datos ("Último")
-    series_str = df.iloc[:, 0].astype(str).str.replace('.', '', regex=False).str.replace(',', '.')
-    prices[asset] = series_str.astype(float)
-
-# Combinar todas las series en un DataFrame
-df_prices = pd.concat(prices, axis=1)
-
-# Eliminar fechas con datos faltantes
-df_prices = df_prices.dropna()
-
-# Calcular rendimientos logarítmicos diarios
+df_prices  = pd.concat(prices, axis=1).dropna()
 df_returns = np.log(df_prices / df_prices.shift(1)).dropna()
 
-# Calcular matriz de correlación
-correlation_matrix = df_returns.corr()
-
-# Visualización del heatmap
-plt.figure(figsize=(16, 14))
-sns.heatmap(correlation_matrix, annot=False, cmap="coolwarm", center=0,
-            xticklabels=correlation_matrix.columns,
-            yticklabels=correlation_matrix.columns)
-plt.title("Correlation matrix of logarithmic returns")
-plt.tight_layout(rect=[0, 0.055, 1, 0.995])
-plt.show()
-
-# ---------------------------------------------
-# AUTOVALORES Y AUTOVECTORES ORDENADOS
-# ---------------------------------------------
-
-eigenvals, eigenvecs = np.linalg.eigh(correlation_matrix)
+# ——————————————————
+# 3) Matriz de correlación y autovalores/autovectores
+# ——————————————————
+corr = df_returns.corr()
+eigenvals, eigenvecs = np.linalg.eigh(corr)
 idx = np.argsort(eigenvals)[::-1]
 eigenvals = eigenvals[idx]
-eigenvecs = eigenvecs[:, idx]  # columnas = autovectores
+eigenvecs = eigenvecs[:, idx]
 
-# Mostrar los 5 principales autovalores y sus componentes
+# ——————————————————
+# 4) Construcción de portafolios según los 5 autovectores principales
+# ——————————————————
+port_returns = pd.DataFrame(index=df_returns.index)
 for i in range(5):
-    print(f"Autovalor {i+1}: {eigenvals[i]:.4f}")
-    components = pd.Series(eigenvecs[:, i], index=correlation_matrix.columns)
-    components_sorted = components.abs().sort_values(ascending=False)
-    print("Activos que más contribuyen:")
-    print(components_sorted.head(5))
-
-
-# Crear histograma de los autovalores
-plt.figure(figsize=(10, 6))
-plt.hist(eigenvals, bins=100, density=True, color='skyblue', alpha=0.5, label="Eigenvalues", edgecolor='black')
-plt.title("Eigenvalues distribution")
-plt.xlabel("$\\lambda$")
-plt.ylabel("$\\rho(\\lambda)$")
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.show()
-
-#Prueba
-# from scipy.stats import gaussian_kde
-
-# density = gaussian_kde(eigenvals, bw_method='scott')  # puedes probar también 'silverman' o manual
-# density.set_bandwidth(bw_method=density.factor * 0.1)  # más agudo
-
-# x_vals = np.linspace(min(eigenvals), max(eigenvals), 1000)
-# y_vals = density(x_vals)
-
-# plt.figure(figsize=(10, 6))
-# plt.plot(x_vals, y_vals, label='KDE ajustado', color='navy', linewidth=2)
-# plt.title("Espectro empírico ajustado")
-# plt.xlabel("Autovalor")
-# plt.ylabel("Densidad")
-# plt.grid(True)
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-
-# ---------------------------------------------
-# CONSTRUCCIÓN DE CARTERAS CON LOS 5 PRINCIPALES AUTOVECTORES
-# ---------------------------------------------
-
-portfolio_cum_all = {}
-for i in range(5):
-    weights = eigenvecs[:, i]
-    weights /= np.sum(np.abs(weights))
-    returns = df_returns @ weights
-    portfolio_cum_all[f"Eigenvalue {i+1}"] = (1 + returns).cumprod()
-
-# Comparación con SP500 (si existe en los datos)
+    w = eigenvecs[:, i]
+    w /= np.sum(np.abs(w))
+    port_returns[f"Eigen {i+1}"] = df_returns.dot(w)
+# Añadir SP500 como benchmark
 if 'sp500' in df_returns.columns:
-    sp500_cum = (1 + df_returns['sp500']).cumprod()
-    portfolio_cum_all['SP500'] = sp500_cum
+    port_returns['SP500'] = df_returns['sp500']
 
-# Plot
-plt.figure(figsize=(12, 6))
-for label, series in portfolio_cum_all.items():
-    plt.plot(series, label=label)
+# Series de rendimiento acumulado
+port_cum = (1 + port_returns).cumprod()
 
-plt.title("Cumulative Performance of Portfolios Based on Leading Eigenvectors")
-plt.xlabel("Date")
-plt.ylabel("Portfolios Multiplier")
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.show()
+# ——————————————————
+# 5) Preparar animación anual
+# ——————————————————
+years = sorted(df_prices.index.year.unique())
 
-# ---------------------------------------------
-# MARCENKO-PASTUR TEÓRICA - FIGURA AJUSTADA
-# ---------------------------------------------
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
+lines = {col: ax1.plot([], [], label=col)[0] for col in port_cum.columns}
 
-# q1 = 3.45
-# q2 = 2.0
+ax1.set_xlim(df_prices.index.min(), df_prices.index.max())
+ax1.set_ylim(port_cum.min().min(), port_cum.max().max())
+ax1.set_title("Cumulative Performance of Eigen-Portfolios vs SP500")
+ax1.legend(loc="upper left")
 
-# def rho_empirical(lambda_vals, q):
-#     lambda_plus = (np.sqrt(q) + 1)**2
-#     lambda_minus = (np.sqrt(q) - 1)**2
-#     rho = np.zeros_like(lambda_vals)
-#     mask = (lambda_vals >= lambda_minus) & (lambda_vals <= lambda_plus)
-#     rho[mask] = np.sqrt(4 * lambda_vals[mask] * q - (lambda_vals[mask] + q - 1)**2) / (2 * np.pi * lambda_vals[mask] * q)
-#     rho[~np.isfinite(rho)] = 0
-#     return rho
+ax2.set_xlim(port_returns.min().min(), port_returns.max().max())
+ax2.set_title("Distribution of Portfolio Returns (log scale)")
+ax2.set_yscale('log')
 
-# lambda_vals = np.linspace(0.01, 3, 1000)
-# rho_q1 = rho_empirical(lambda_vals, q1)
-# rho_q2 = rho_empirical(lambda_vals, q2)
+def init():
+    for ln in lines.values():
+        ln.set_data([], [])
+    ax2.clear()
+    ax2.set_xlim(port_returns.min().min(), port_returns.max().max())
+    ax2.set_title("Distribution of Portfolio Returns (log scale)")
+    ax2.set_yscale('log')
+    return list(lines.values())
 
-# plt.figure(figsize=(8, 5))
-# plt.plot(lambda_vals, rho_q2, label='exp Q=2', color='black')
-# plt.plot(lambda_vals, rho_q1, '--', label='std Q=3.45', color='gray')
-# plt.title('Marčenko–Pastur: densidad teórica (forma del paper)')
-# plt.xlabel(r'$\lambda$')
-# plt.ylabel(r'$\rho(\lambda)$')
-# plt.legend()
-# plt.grid(True)
-# plt.tight_layout()
-# plt.show()
+def update(frame):
+    year = years[frame]
+    mask = port_cum.index.year <= year
+
+    # Actualizar curvas acumuladas
+    for name, ln in lines.items():
+        ln.set_data(port_cum.index[mask], port_cum[name][mask])
+
+    # Histograma de rendimientos diarios hasta ese año
+    ax2.clear()
+    data = port_returns.loc[mask].values.flatten()
+    ax2.hist(data, bins=30)
+    ax2.set_xlim(port_returns.min().min(), port_returns.max().max())
+    ax2.set_title(f"Returns up to {year} (log scale)")
+    ax2.set_yscale('log')
+
+    return list(lines.values())
+
+ani = FuncAnimation(fig, update,
+                    frames=len(years),
+                    init_func=init,
+                    interval=500,
+                    blit=False)
+
+# ——————————————————
+# 6) Guardar GIF
+# ——————————————————
+writer = PillowWriter(fps=2)
+ani.save(output_gif, writer=writer)
+print(f"GIF guardado en: {output_gif}")

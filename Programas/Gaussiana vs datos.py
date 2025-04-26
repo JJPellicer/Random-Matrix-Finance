@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-from scipy.stats import norm
+from scipy.stats import gaussian_kde, norm
 
 # Lista de activos
 assets = [
@@ -16,7 +16,7 @@ assets = [
 ]
 
 # Ruta a los datos
-data_path = 'C:/Users/Propietario/Documents/GitHub/Random-Matrix-Finance/Datos'
+data_path = 'C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos'
 
 # Diccionario de precios
 prices = {}
@@ -51,6 +51,31 @@ plt.title("Emphirical distributions vs gaussian")
 plt.xlabel("Standard Returns")
 plt.ylabel("PDF")
 plt.legend()
-plt.grid(True)
+plt.grid(False)
+plt.tight_layout()
+plt.show()
+
+#Escala logaritmica
+
+plt.figure(figsize=(10, 6))
+x = np.linspace(-5, 5, 1000)
+
+# Añadir curva gaussiana estándar
+plt.plot(x, norm.pdf(x), 'k--', linewidth=2, label='Normal(0,1)')
+
+# KDE de cada activo con filtro para valores pequeños
+for asset in assets:
+    data = std_returns[asset].dropna()
+    kde = gaussian_kde(data, bw_method='scott')
+    y_vals = kde(x)
+    y_vals = np.clip(y_vals, 1e-6, None)  # Evitar valores cercanos a cero o negativos
+    plt.plot(x, y_vals, linewidth=1)
+
+plt.yscale('log')
+plt.title("Empirical KDEs vs Gaussian (log-scale)")
+plt.xlabel("Standard Returns")
+plt.ylabel("Log PDF")
+plt.grid(False)
+plt.legend()
 plt.tight_layout()
 plt.show()

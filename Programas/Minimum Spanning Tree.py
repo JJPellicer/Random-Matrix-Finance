@@ -32,7 +32,7 @@ for asset in assets:
             color_nodos.append(colores[tipo])
 
 # Ruta a los datos
-data_path = 'C:/Users/Propietario/Documents/GitHub/Random-Matrix-Finance/Datos'
+data_path = 'C:/Users/Propietario/Desktop/TFG Juan/Random-Matrix-Finance-main/Datos'
 
 # Diccionario de precios
 prices = {}
