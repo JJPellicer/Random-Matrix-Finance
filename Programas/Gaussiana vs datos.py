@@ -47,7 +47,7 @@ plt.plot(x, y_gauss, 'k--', label='Normal(0,1)', linewidth=2)
 for asset in assets:
     sns.kdeplot(std_returns[asset], linewidth=2)
 
-plt.title("Emphirical distributions vs gaussian")
+plt.title("Empirical distributions vs gaussian")
 plt.xlabel("Standard Returns")
 plt.ylabel("PDF")
 plt.legend()
@@ -74,7 +74,7 @@ for asset in assets:
 plt.yscale('log')
 plt.title("Empirical KDEs vs Gaussian (log-scale)")
 plt.xlabel("Standard Returns")
-plt.ylabel("Log PDF")
+plt.ylabel("PDF")
 plt.grid(False)
 plt.legend()
 plt.tight_layout()
