@@ -63,7 +63,7 @@ def update(frame):
     returns_year = df_returns[df_returns.index.year == year]
     corr = returns_year.corr()
     im.set_data(corr.values)
-    ax.set_title(f"Matriz de correlación en {year}")
+    ax.set_title(f"Correlation matrix in {year}")
     return (im,)
 
 # ——————————————————

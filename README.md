@@ -1,35 +1,38 @@
 # Random Matrix Finance TFG
 
-**Random Matrix Finance TFG** es un proyecto desarrollado como Trabajo de Fin de Grado en Física (Universitat de Barcelona), con el objetivo de aplicar herramientas de la Teoría de Matrices Aleatorias (RMT) al análisis de datos financieros.
+**Random Matrix Finance TFG** is a project developed as part of my Bachelor's Thesis in Physics at the **University of Barcelona**, focused on applying tools from **Random Matrix Theory (RMT)** to the analysis of financial data.
 
-## Objetivo
+## 🎯 Objective
 
-Estudiar la estructura de correlaciones entre activos financieros mediante RMT, con énfasis en:
+The aim is to explore the correlation structure among financial assets using RMT, with emphasis on:
 
-- Detección de estructura no trivial en la matriz de correlación.
-- Detección del comportamiento de mercado.
-- Identificación de los modos colectivos más relevantes.
-- Visuzalizar los modos de conexión entre los distintos mercados.
+- Detecting non-trivial structures in the correlation matrix.
+- Identifying collective market behavior.
+- Extracting dominant market modes.
+- Visualizing connections between different markets and asset classes.
 
-## Metodología
+## 🧪 Methodology
 
-El análisis se realiza sobre datos diarios de distintos activos financieros (índices, derivados, bonos), aplicando:
+The analysis is based on daily data from a diverse set of financial instruments (indices, derivatives, and bonds), and includes:
 
-- Análisis de correlación y rendimientos logarítmicos.
-- Descomposición espectral de matrices de correlación.
-- Comparación con predicciones teóricas de RMT.
-- Visualización y análisis de componentes principales.
+- Logarithmic return computation and correlation analysis.
+- Spectral decomposition of empirical correlation matrices.
+- Comparison with theoretical predictions from RMT.
+- Principal Component Analysis (PCA) and visual exploration.
 
-## Herramientas
+## 🛠️ Tools & Technologies
 
-- Python (NumPy, Pandas, Matplotlib, Seaborn, SciPy)
+- Python: `NumPy`, `Pandas`, `Matplotlib`, `Seaborn`, `SciPy`
 - Jupyter Notebooks
-- LaTeX (documento del TFG)
-- Teoría de Matrices Aleatorias (Bouchaud & Potters)
+- LaTeX (for the written thesis document)
+- Theoretical framework: *Random Matrix Theory* (Bouchaud & Potters)
 
+## ⚠️ Note
 
-## Autor
+While the main results and plots are presented in English, some variable names and comments in the code are in Spanish, as the original development was done in that language.
 
-Juan José Pellicer Querol
-Grado en Física — Universitat de Barcelona  
-[Linkedin: Juan José Pellicer Querol](https://www.linkedin.com/in/juan-jose-pellicer-querol/)
+## 👨‍💻 Author
+
+**Juan José Pellicer Querol**  
+BSc in Physics — University of Barcelona  
+🔗 [LinkedIn: Juan José Pellicer Querol](https://www.linkedin.com/in/juan-jose-pellicer-querol/)
