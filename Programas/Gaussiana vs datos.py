@@ -1,11 +1,12 @@
-# Cálculo y visualización de rendimientos logarítmicos estandarizados
-
 import pandas as pd
 import numpy as np
+import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FixedLocator, FuncFormatter
 import seaborn as sns
 import os
 from scipy.stats import gaussian_kde, norm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # Lista de activos
 assets = [
@@ -34,48 +35,84 @@ for asset in assets:
 # Unir todos los precios y calcular rendimientos
 df_prices = pd.concat(prices, axis=1).dropna()
 df_returns = np.log(df_prices / df_prices.shift(1)).dropna()
+print(df_returns.head())
 
 # Estandarización de rendimientos
 std_returns = (df_returns - df_returns.mean()) / df_returns.std()
 
-# Visualizar todas las curvas en una única gráfica
-plt.figure(figsize=(10, 6))
+# Crear la figura principal
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Graficar la gaussiana teórica
 x = np.linspace(-5, 5, 1000)
 y_gauss = norm.pdf(x, 0, 1)
-plt.plot(x, y_gauss, 'k--', label='Normal(0,1)', linewidth=2)
+ax.plot(x, y_gauss, 'k--', label='Normal(0,1)', linewidth=2)
 
-for asset in assets:
-    sns.kdeplot(std_returns[asset], linewidth=2)
+# Histograma de cada activo
+for asset in df_returns.columns:
+    ax.hist(std_returns[asset], bins=70, density=True, alpha=0.3, histtype='stepfilled')
 
-plt.title("Empirical distributions vs gaussian")
-plt.xlabel("Standard Returns")
-plt.ylabel("PDF")
-plt.legend()
-plt.grid(False)
-plt.tight_layout()
-plt.show()
+# Configuración principal
+ax.set_xlabel("Standard Returns")
+ax.set_ylabel("PDF")
+ax.set_yscale('log')
+ax.set_ylim(1e-3, 1)
 
-#Escala logaritmica
+# -------------------------------
+# Zoom: Cola izquierda (Inset 1)
+# -------------------------------
+axins_left = inset_axes(ax, width="100%", height="100%",
+                        bbox_to_anchor=(0.1, 0.6, 0.3, 0.3),
+                        bbox_transform=ax.transAxes,
+                        borderpad=0)
 
-plt.figure(figsize=(10, 6))
-x = np.linspace(-5, 5, 1000)
+for asset in df_returns.columns:
+    filtered=std_returns[asset]
+    axins_left.hist(-std_returns[asset], bins=70, density=True, alpha=0.3, histtype='stepfilled')
+axins_left.plot(x, y_gauss, 'k--', linewidth=2)
 
-# Añadir curva gaussiana estándar
-plt.plot(x, norm.pdf(x), 'k--', linewidth=2, label='Normal(0,1)')
+axins_left.set_xlim(10, 1)
+axins_left.set_ylim(1e-3, 1)
+axins_left.set_yscale('log')
+axins_left.set_xscale('log')
+axins_left.set_title("Left Tail", fontsize=9)
 
-# KDE de cada activo con filtro para valores pequeños
-for asset in assets:
-    data = std_returns[asset].dropna()
-    kde = gaussian_kde(data, bw_method='scott')
-    y_vals = kde(x)
-    y_vals = np.clip(y_vals, 1e-6, None)  # Evitar valores cercanos a cero o negativos
-    plt.plot(x, y_vals, linewidth=1)
+ticks=[2, 4, 6, 8, 10]
+# Establecer los ticks manualmente
+axins_left.set_xticks(ticks)
+axins_left.xaxis.set_major_locator(FixedLocator(ticks))
 
-plt.yscale('log')
-plt.title("Empirical KDEs vs Gaussian (log-scale)")
-plt.xlabel("Standard Returns")
-plt.ylabel("PDF")
-plt.grid(False)
-plt.legend()
+# Mostrar las etiquetas como negativas
+axins_left.xaxis.set_major_formatter(FuncFormatter(lambda val, _: f"-{int(val)}"))
+axins_left.xaxis.set_minor_locator(FixedLocator([]))
+
+# -------------------------------
+# Zoom: Cola derecha (Inset 2)
+# -------------------------------
+axins_right = inset_axes(ax, width="100%", height="100%",
+                         bbox_to_anchor=(0.66, 0.6, 0.3, 0.3),
+                         bbox_transform=ax.transAxes,
+                         borderpad=0)
+
+for asset in df_returns.columns:
+    axins_right.hist(std_returns[asset], bins=70, density=True, alpha=0.3, histtype='stepfilled')
+axins_right.plot(x, y_gauss, 'k--', linewidth=2)
+
+axins_right.set_xlim(1, 10)
+axins_right.set_ylim(1e-3, 1)
+axins_right.set_yscale('log')
+axins_right.set_xscale('log')
+axins_right.set_title("Right Tail", fontsize=9)
+ticks=[2, 4, 6, 8, 10]
+# Establecer los ticks manualmente
+axins_right.set_xticks(ticks)
+axins_right.xaxis.set_major_locator(FixedLocator(ticks))
+
+# Mostrar las etiquetas como negativas
+axins_right.xaxis.set_major_formatter(FuncFormatter(lambda val, _: f"{int(val)}"))
+axins_right.xaxis.set_minor_locator(FixedLocator([]))
+
+
+
 plt.tight_layout()
 plt.show()

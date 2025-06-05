@@ -75,10 +75,9 @@ centralidad = nx.degree_centrality(G)
 tamanos_nodos = [300 + 1500 * centralidad[n] for n in G.nodes()]
 
 # Dibujar grafo con layout mejorado
-fig, ax = plt.subplots(figsize=(16, 12))
+fig, ax = plt.subplots(figsize=(20, 15))
 pos = nx.kamada_kawai_layout(G)
 
-# Dibujar nodos y aristas
 nx.draw(G, pos,
         with_labels=True,
         node_color=color_nodos,
@@ -88,15 +87,37 @@ nx.draw(G, pos,
         width=1.5,
         ax=ax)
 
-# Etiquetas de aristas
 labels = nx.get_edge_attributes(G, 'weight')
 nx.draw_networkx_edge_labels(G, pos,
     edge_labels={k: f"{v:.2f}" for k, v in labels.items()},
     font_size=7,
     ax=ax)
 
-# Título y ajustes
-plt.title("Minimum Spanning Tree of assets", fontsize=14)
 plt.subplots_adjust(left=0.05, right=0.95, top=0.92, bottom=0.05)
 plt.show()
+
+# -------------------------
+# HEATMAP ORDENADO 
+# -------------------------
+
+order_visual = [
+    'szse', 'shanghai', 'chinaa50', 'nifty50', 'hangseng', 'kospi', 'nikkei225', 'spasx200',
+    'ftse100', 'aex', 'cac40', 'dax', 'ibex35', 'omxs30', 'smi',
+    'sptsx', 'sp500', 'dowjones', 'us10y', 'nasdaq', 'spbmvipc',
+    'bovespa', 'spmerval',
+    'copper', 'silver', 'gold',
+    'oil', 'gas'
+]
+
+# Generamos el heatmap ordenado según el orden visual
+C_ord_visual = correlation_matrix.reindex(index=order_visual, columns=order_visual)
+
+plt.figure(figsize=(8, 7))
+sns.heatmap(C_ord_visual, cmap='RdBu_r', center=0,
+            xticklabels=order_visual,
+            yticklabels=order_visual)
+plt.tight_layout()
+plt.show()
+
+
 

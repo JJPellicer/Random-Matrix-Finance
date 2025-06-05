@@ -1,14 +1,15 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import seaborn as sns
 import os
 
 # Lista de activos (nombre de archivos sin .csv)
 assets = [
-    'aex', 'cac40', 'dax', 'ftse100', 'ibex35', 'omxs30', 'smi',
+     'aex', 'cac40', 'dax', 'ftse100', 'ibex35', 'omxs30', 'smi',
     'bovespa', 'spmerval',
-    'chinaa50', 'shanghai', 'szse',
+    'szse', 'shanghai', 'chinaa50',
     'hangseng', 'kospi', 'nikkei225', 'nifty50', 'spasx200',
     'dowjones','nasdaq', 'sp500', 'spbmvipc', 'sptsx',
     'oil', 'gas', 'gold', 'silver', 'copper', 'us10y'
@@ -46,18 +47,18 @@ df_prices = pd.concat(prices, axis=1)
 # Eliminar fechas con datos faltantes
 df_prices = df_prices.dropna()
 
+
 # Calcular rendimientos logarítmicos diarios
 df_returns = np.log(df_prices / df_prices.shift(1)).dropna()
-
+print(df_returns.shape)
 # Calcular matriz de correlación
 correlation_matrix = df_returns.corr()
 
 # Visualización del heatmap
 plt.figure(figsize=(8, 7))
-sns.heatmap(correlation_matrix, annot=False, cmap="coolwarm", center=0,
+sns.heatmap(correlation_matrix, annot=False, cmap="RdBu_r", center=0,
             xticklabels=correlation_matrix.columns,
             yticklabels=correlation_matrix.columns)
-plt.title("Correlation matrix of logarithmic reutrns")
 plt.tight_layout()
 plt.show()
 
@@ -74,7 +75,6 @@ eigenvecs = eigenvecs[:, idx]  # columnas = autovectores
 plt.figure(figsize=(10, 6))
 plt.hist(eigenvals, bins=100, density=True, alpha=0.5, edgecolor='black', label='Eigenvalues')
 
-plt.title("Eigenvalues distribution")
 plt.xlabel(r'$\lambda$')
 plt.ylabel(r'$\rho(\lambda)$')
 plt.legend()
@@ -86,66 +86,67 @@ plt.show()
 for i in range(5):
     print(f"\n🔹 Autovalor {i+1}: {eigenvals[i]:.4f}")
     components = pd.Series(eigenvecs[:, i], index=correlation_matrix.columns)
-    components_sorted = components.abs().sort_values(ascending=False)
+    components_sorted = components.sort_values(ascending=False)
     print("Activos que más contribuyen:")
-    print(components_sorted.head(5))
+    print(components_sorted.head(28))
 
 # ---------------------------------------------
-# CONSTRUCCIÓN DE CARTERAS CON LOS 5 PRINCIPALES AUTOVECTORES
+# HEATMAP ORDENADO SEGÚN EL MARKET MODE
+# ---------------------------------------------
+
+# 1. Tomar el market mode (primer autovector)
+market_mode = eigenvecs[:, 0]
+market_mode_series = pd.Series(market_mode, index=correlation_matrix.columns)
+
+# 2. Ordenar los activos por la magnitud de su componente en el market mode
+order = market_mode_series.sort_values(ascending=False).index
+
+# 3. Reordenar la matriz
+correlation_matrix_ordered = correlation_matrix.reindex(index=order, columns=order)
+
+# 4. Dibujar el heatmap ordenado
+plt.figure(figsize=(8, 7))
+sns.heatmap(correlation_matrix_ordered, cmap='RdBu_r', center=0,
+            xticklabels=correlation_matrix_ordered.columns,
+            yticklabels=correlation_matrix_ordered.columns)
+plt.tight_layout()
+plt.show()
+
+# ---------------------------------------------
+# CONSTRUCCIÓN DE CARTERAS CON LOS 3 PRINCIPALES AUTOVECTORES
 # ---------------------------------------------
 
 portfolio_cum_all = {}
-for i in range(5):
+for i in range(3):
     weights = eigenvecs[:, i]
     weights /= np.sum(np.abs(weights))
+    print(f"pesos{i+1}:", weights)
     returns = df_returns @ weights
-    portfolio_cum_all[f"Autovalor {i+1}"] = (1 + returns).cumprod()
+    portfolio_cum_all[f"Autovalor {i+1}"] = np.exp(returns.cumsum())
 
-# Comparación con SP500 (si existe en los datos)
+# Comparación con sp500
 if 'sp500' in df_returns.columns:
-    sp500_cum = (1 + df_returns['sp500']).cumprod()
-    portfolio_cum_all['SP500'] = sp500_cum
+    sp500_cum = np.exp(df_returns['sp500'].cumsum())
+    portfolio_cum_all['sp500'] = sp500_cum
+
+# Comparación con Ibex35
+if 'ibex35' in df_returns.columns:
+    ibex35_cum = np.exp(df_returns['ibex35'].cumsum())
+    portfolio_cum_all['ibex35'] = ibex35_cum
 
 # Plot
-plt.figure(figsize=(12, 6))
+plt.figure(figsize=(10, 6))
 for label, series in portfolio_cum_all.items():
     plt.plot(series, label=label)
 
-plt.title("Cumulative Performance of Portfolios Based on Leading Eigenvectors")
 plt.xlabel("Date")
-plt.ylabel("Portfolios Multiplier")
+plt.ylabel("Cumulative Growth Factor")
+plt.gca().yaxis.set_major_locator(MultipleLocator(0.25))
 plt.grid(False)
 plt.legend()
 plt.tight_layout()
 plt.show()
 
-# ---------------------------------------------
-# MARCENKO-PASTUR TEÓRICA - FIGURA AJUSTADA
-# ---------------------------------------------
-
-# q1 = 3.45
-# q2 = 2.0
-
-# def rho_empirical(lambda_vals, q):
-#     lambda_plus = (np.sqrt(q) + 1)**2
-#     lambda_minus = (np.sqrt(q) - 1)**2
-#     rho = np.zeros_like(lambda_vals)
-#     mask = (lambda_vals >= lambda_minus) & (lambda_vals <= lambda_plus)
-#     rho[mask] = np.sqrt(4 * lambda_vals[mask] * q - (lambda_vals[mask] + q - 1)**2) / (2 * np.pi * lambda_vals[mask] * q)
-#     rho[~np.isfinite(rho)] = 0
-#     return rho
-
-# lambda_vals = np.linspace(0.01, 3, 1000)
-# rho_q1 = rho_empirical(lambda_vals, q1)
-# rho_q2 = rho_empirical(lambda_vals, q2)
-
-# plt.figure(figsize=(8, 5))
-# plt.plot(lambda_vals, rho_q2, label='exp Q=2', color='black')
-# plt.plot(lambda_vals, rho_q1, '--', label='std Q=3.45', color='gray')
-# plt.title('Marčenko–Pastur: densidad teórica (forma del paper)')
-# plt.xlabel(r'$\lambda$')
-# plt.ylabel(r'$\rho(\lambda)$')
-# plt.legend()
-# plt.grid(True)
-# plt.tight_layout()
-# plt.show()
+print("Multiplicadores finales acumulados:")
+for label, series in portfolio_cum_all.items():
+    print(f"{label}: {series.iloc[-1]:.4f}")
