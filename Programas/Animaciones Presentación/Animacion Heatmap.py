@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 
-# ——————————————————
-# 1) Configuración de rutas y lista de activos
-# ——————————————————
+# ---------------------------------------------
+# Configuración de rutas y lista de activos
+# ---------------------------------------------
 assets = [
     'aex', 'cac40', 'dax', 'ftse100', 'ibex35', 'omxs30', 'smi',
     'bovespa', 'spmerval',
@@ -19,9 +19,9 @@ data_path  = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Datos"
 output_dir = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Resultados"
 output_gif = os.path.join(output_dir, "corr_heatmap_yearly.gif")
 
-# ——————————————————
-# 2) Leer datos y calcular rendimientos
-# ——————————————————
+# -------------------------------------
+# Leer datos y calcular rendimientos
+# -------------------------------------
 prices = {}
 for asset in assets:
     fp = os.path.join(data_path, f"{asset}.csv")
@@ -38,25 +38,25 @@ for asset in assets:
 df_prices  = pd.concat(prices, axis=1).dropna()
 df_returns = np.log(df_prices / df_prices.shift(1)).dropna()
 
-# ——————————————————
-# 3) Lista de años y configuración de la figura
-# ——————————————————
+# ----------------------------------------------
+# Lista de años y configuración de la figura
+# ----------------------------------------------
 years = sorted(df_returns.index.year.unique())
 
-fig, ax = plt.subplots(figsize=(8, 7))
+fig, ax = plt.subplots(figsize=(8, 8))
 vmin, vmax = -1, 1
 # Dibujamos una matriz vacía para inicializar
 corr0 = df_returns[df_returns.index.year == years[0]].corr()
-im = ax.imshow(corr0, vmin=vmin, vmax=vmax, cmap='coolwarm')
+im = ax.imshow(corr0, vmin=vmin, vmax=vmax, cmap='RdBu_r')
 ax.set_xticks(np.arange(len(assets)))
 ax.set_yticks(np.arange(len(assets)))
-ax.set_xticklabels(assets, rotation=90, fontsize=6)
-ax.set_yticklabels(assets, fontsize=6)
+ax.set_xticklabels(assets, rotation=90, fontsize=12)
+ax.set_yticklabels(assets, fontsize=12)
 cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
-# ——————————————————
-# 4) Función de actualización
-# ——————————————————
+# ----------------------------
+#  Función de actualización
+# ----------------------------
 def update(frame):
     year = years[frame]
     # Correlación del año en curso
@@ -66,9 +66,9 @@ def update(frame):
     ax.set_title(f"Correlation matrix in {year}")
     return (im,)
 
-# ——————————————————
-# 5) Crear animación y guardar como GIF
-# ——————————————————
+# -------------------------------------
+# Crear animación y guardar como GIF
+# -------------------------------------
 ani = FuncAnimation(
     fig, update,
     frames=len(years),

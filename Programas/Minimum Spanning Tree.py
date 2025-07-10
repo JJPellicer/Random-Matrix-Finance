@@ -1,5 +1,3 @@
-# Minimum Spanning Tree (MST) con nodos coloreados por tipo de activo y tamaño según centralidad
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,6 +34,7 @@ data_path = 'C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Datos'
 
 # Diccionario de precios
 prices = {}
+
 for asset in assets:
     filepath = os.path.join(data_path, f"{asset}.csv")
     df = pd.read_csv(filepath, encoding='ISO-8859-1')
@@ -53,7 +52,7 @@ df_returns = np.log(df_prices / df_prices.shift(1)).dropna()
 # Calcular matriz de correlación
 correlation_matrix = df_returns.corr()
 
-# Convertir correlación en distancia: d_ij = sqrt(2(1 - rho_ij))
+# Convertir correlación en distancia
 dist_matrix = np.sqrt(2 * (1 - correlation_matrix))
 
 # Aplicar MST
@@ -75,17 +74,27 @@ centralidad = nx.degree_centrality(G)
 tamanos_nodos = [300 + 1500 * centralidad[n] for n in G.nodes()]
 
 # Dibujar grafo con layout mejorado
-fig, ax = plt.subplots(figsize=(20, 15))
+fig, ax = plt.subplots(figsize=(18,12), facecolor='white')
+ax.set_axis_off()  # Eliminar
 pos = nx.kamada_kawai_layout(G)
 
-nx.draw(G, pos,
-        with_labels=True,
-        node_color=color_nodos,
-        edge_color='gray',
-        node_size=tamanos_nodos,
-        font_size=9,
-        width=1.5,
-        ax=ax)
+# Dibuja nodos y aristas sin etiquetas
+nx.draw_networkx_nodes(G, pos,
+                       node_color=color_nodos,
+                       node_size=tamanos_nodos,
+                       ax=ax)
+nx.draw_networkx_edges(G, pos,
+                       edge_color='gray',
+                       width=1.5,
+                       ax=ax)
+
+# Añadir etiquetas de nodos rotadas
+labels = {node: node for node in G.nodes()}
+textos = nx.draw_networkx_labels(G, pos, labels=labels, font_size=9, ax=ax)
+
+# Rotar cada etiqueta
+for _, t in textos.items():
+    t.set_rotation(30)
 
 labels = nx.get_edge_attributes(G, 'weight')
 nx.draw_networkx_edge_labels(G, pos,
@@ -97,7 +106,7 @@ plt.subplots_adjust(left=0.05, right=0.95, top=0.92, bottom=0.05)
 plt.show()
 
 # -------------------------
-# HEATMAP ORDENADO 
+# HEATMAP ORDENADO MST
 # -------------------------
 
 order_visual = [
@@ -116,6 +125,8 @@ plt.figure(figsize=(8, 7))
 sns.heatmap(C_ord_visual, cmap='RdBu_r', center=0,
             xticklabels=order_visual,
             yticklabels=order_visual)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
 plt.tight_layout()
 plt.show()
 
