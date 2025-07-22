@@ -24,6 +24,7 @@ Random-Matrix-Finance/
 │   ├── Gaussiana vs datos
 │   ├── Minimum Spanning Tree
 │   ├── Resultados sp500
+│   ├── Estrategia de inversión (Físico)
 │   └── Animaciones Presentación/
 │       ├── Animacion caminata aleatoria
 │       ├── Animacion Heatmap
@@ -52,7 +53,6 @@ This project was developed using:
   - `seaborn`
   - `scipy`
   - `networkx`
-  - `yfinance`
 
 To install all dependencies:
 

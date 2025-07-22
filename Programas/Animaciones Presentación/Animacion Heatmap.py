@@ -8,12 +8,12 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 # Configuración de rutas y lista de activos
 # ---------------------------------------------
 assets = [
-    'aex', 'cac40', 'dax', 'ftse100', 'ibex35', 'omxs30', 'smi',
+    'szse', 'shanghai', 'chinaa50', 'nifty50', 'hangseng', 'kospi', 'nikkei225', 'spasx200',
+    'ftse100', 'aex', 'cac40', 'dax', 'ibex35', 'omxs30', 'smi',
+    'sptsx', 'sp500', 'dowjones', 'us10y', 'nasdaq', 'spbmvipc',
     'bovespa', 'spmerval',
-    'chinaa50', 'shanghai', 'szse',
-    'hangseng', 'kospi', 'nikkei225', 'nifty50', 'spasx200',
-    'dowjones','nasdaq', 'sp500', 'spbmvipc', 'sptsx',
-    'oil', 'gas', 'gold', 'silver', 'copper', 'us10y'
+    'copper', 'silver', 'gold',
+    'oil', 'gas'
 ]
 data_path  = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Datos"
 output_dir = r"C:/Users/Juan/Documents/GitHub/Random-Matrix-Finance/Resultados"
@@ -63,7 +63,7 @@ def update(frame):
     returns_year = df_returns[df_returns.index.year == year]
     corr = returns_year.corr()
     im.set_data(corr.values)
-    ax.set_title(f"Correlation matrix in {year}")
+    ax.set_title(f"Correlation matrix in {year}",fontsize=12)
     return (im,)
 
 # -------------------------------------

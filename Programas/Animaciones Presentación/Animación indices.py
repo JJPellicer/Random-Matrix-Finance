@@ -6,6 +6,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.dates as mdates
 from matplotlib.ticker import MultipleLocator
 
+
 # -----------------------------------
 # Configuración de rutas y activos
 # -----------------------------------
@@ -108,7 +109,7 @@ def update(frame):
 ani = FuncAnimation(fig, update,
                     frames=len(months),
                     init_func=init,
-                    interval=50,  # Más rápido que antes
+                    interval=50,
                     blit=False)
 
 writer = PillowWriter(fps=30)
